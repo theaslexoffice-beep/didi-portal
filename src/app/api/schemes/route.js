@@ -62,10 +62,25 @@ export async function GET(request) {
       });
     }
 
+    // Fix encoding issues (₹ stored as ‚Çπ in some DB entries)
+    const fixEncoding = (str) => {
+      if (!str || typeof str !== 'string') return str;
+      return str.replace(/‚Çπ/g, '₹').replace(/\u201A\u00C7\u0178/g, '₹');
+    };
+    
+    const cleanSchemes = schemes.map(s => ({
+      ...s,
+      benefits: fixEncoding(s.benefits),
+      description: fixEncoding(s.description),
+      description_hi: fixEncoding(s.description_hi),
+      name: fixEncoding(s.name),
+      name_hi: fixEncoding(s.name_hi),
+    }));
+
     return NextResponse.json({
       success: true,
-      data: schemes,
-      count: schemes.length
+      data: cleanSchemes,
+      count: cleanSchemes.length
     });
   } catch (error) {
     console.error('GET /api/schemes error:', error);

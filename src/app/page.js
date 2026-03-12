@@ -40,6 +40,7 @@ export default function Home() {
   const [showComplaintForm, setShowComplaintForm] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [user, setUser] = useState(null);
+  const [selectedScheme, setSelectedScheme] = useState(null);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -87,10 +88,7 @@ export default function Home() {
         return (
           <SchemesList
             lang={language}
-            onSchemeClick={(scheme) => {
-              // Could open scheme detail modal
-              console.log('Scheme clicked:', scheme);
-            }}
+            onSchemeClick={(scheme) => setSelectedScheme(scheme)}
           />
         );
 
@@ -182,6 +180,103 @@ export default function Home() {
           onSuccess={handleLogin}
           onClose={() => setShowLoginModal(false)}
         />
+      </Modal>
+
+      {/* Scheme Detail Modal */}
+      <Modal
+        isOpen={!!selectedScheme}
+        onClose={() => setSelectedScheme(null)}
+        title={selectedScheme ? (language === 'hi' && selectedScheme.name_hi ? selectedScheme.name_hi : selectedScheme.name) : ''}
+      >
+        {selectedScheme && (
+          <div className="space-y-5">
+            {/* Ministry */}
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                {language === 'hi' ? 'मंत्रालय' : 'Ministry'}
+              </p>
+              <p className="text-sm text-gray-700">{selectedScheme.ministry}</p>
+            </div>
+
+            {/* Level */}
+            <div>
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                selectedScheme.level === 'central' 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'bg-green-100 text-green-700'
+              }`}>
+                {selectedScheme.level === 'central' ? (language === 'hi' ? 'केंद्रीय योजना' : 'Central Scheme') : (language === 'hi' ? 'राज्य योजना (छ.ग.)' : 'State Scheme (CG)')}
+              </span>
+            </div>
+
+            {/* Description */}
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                {language === 'hi' ? 'विवरण' : 'Description'}
+              </p>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {language === 'hi' && selectedScheme.description_hi ? selectedScheme.description_hi : selectedScheme.description}
+              </p>
+            </div>
+
+            {/* Benefits */}
+            {selectedScheme.benefits && (
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                  {language === 'hi' ? 'लाभ' : 'Benefits'}
+                </p>
+                <p className="text-sm text-[#E63946] font-semibold leading-relaxed">{selectedScheme.benefits}</p>
+              </div>
+            )}
+
+            {/* Eligibility */}
+            {selectedScheme.eligibility && (
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                  {language === 'hi' ? 'पात्रता' : 'Eligibility'}
+                </p>
+                {(() => {
+                  try {
+                    const elig = typeof selectedScheme.eligibility === 'string' 
+                      ? JSON.parse(selectedScheme.eligibility) 
+                      : selectedScheme.eligibility;
+                    return (
+                      <div className="text-sm text-gray-700 space-y-1">
+                        {elig.age_min && <p>• Age: {elig.age_min}{elig.age_max ? ` - ${elig.age_max}` : '+'} years</p>}
+                        {elig.income_max && <p>• Max Income: ₹{elig.income_max.toLocaleString('en-IN')}/year</p>}
+                        {elig.gender && <p>• Gender: {elig.gender.join(', ')}</p>}
+                        {elig.categories && <p>• Categories: {elig.categories.join(', ').toUpperCase()}</p>}
+                        {elig.special_conditions && <p className="mt-2 text-gray-500 italic">Note: {elig.special_conditions}</p>}
+                      </div>
+                    );
+                  } catch { return <p className="text-sm text-gray-500">Details available on application</p>; }
+                })()}
+              </div>
+            )}
+
+            {/* Documents Needed */}
+            {selectedScheme.documents_needed && (
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                  {language === 'hi' ? 'आवश्यक दस्तावेज' : 'Documents Needed'}
+                </p>
+                <p className="text-sm text-gray-700">{selectedScheme.documents_needed}</p>
+              </div>
+            )}
+
+            {/* Apply Button */}
+            {selectedScheme.apply_url && (
+              <a
+                href={selectedScheme.apply_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center px-6 py-3 bg-[#E63946] text-white font-semibold rounded-xl hover:bg-[#D62839] transition-all"
+              >
+                {language === 'hi' ? 'आवेदन करें →' : 'Apply Now →'}
+              </a>
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   );
