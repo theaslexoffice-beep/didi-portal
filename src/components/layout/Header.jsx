@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Menu, X, Globe } from 'lucide-react';
 import Button from '../ui/Button';
+import { LogoMark } from '../ui/Logo';
 
 export default function Header({ onLanguageChange, currentLang = 'en', onTabChange, activeTab }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -20,9 +21,7 @@ export default function Header({ onLanguageChange, currentLang = 'en', onTabChan
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-[#E63946] rounded-full flex items-center justify-center">
-              <span className="text-white text-xl">🙏</span>
-            </div>
+            <LogoMark size={40} />
             <div>
               <h1 className="text-xl font-black text-gray-900">DIDI</h1>
               <p className="text-xs text-gray-500">{currentLang === 'hi' ? 'बिलासपुर' : 'Bilaspur'}</p>

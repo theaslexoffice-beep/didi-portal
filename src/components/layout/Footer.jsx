@@ -1,4 +1,5 @@
 import { Heart, Github, Twitter, Mail } from 'lucide-react';
+import { LogoMark } from '../ui/Logo';
 
 export default function Footer({ lang = 'en' }) {
   const content = {
@@ -32,9 +33,7 @@ export default function Footer({ lang = 'en' }) {
           {/* Logo & Tagline */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-[#E63946] rounded-full flex items-center justify-center">
-                <span className="text-white text-xl">🙏</span>
-              </div>
+              <LogoMark size={40} />
               <h2 className="text-2xl font-black">DIDI</h2>
             </div>
             <p className="text-gray-300 text-sm">{t.tagline}</p>
