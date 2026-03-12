@@ -1,10 +1,12 @@
 'use client';
-
 import { useState, useEffect } from 'react';
+import { Shield, Eye, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import Skeleton from '@/components/ui/Skeleton';
+import Tabs from '@/components/ui/Tabs';
 
 export default function AdminPanel() {
   const [password, setPassword] = useState('');
@@ -12,6 +14,7 @@ export default function AdminPanel() {
   const [complaints, setComplaints] = useState([]);
   const [filter, setFilter] = useState('pending');
   const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({ total: 0, pending: 0, resolved: 0, rejected: 0 });
 
   const auth = `Bearer ${password}`;
 
@@ -21,12 +24,13 @@ export default function AdminPanel() {
       const res = await fetch(`/api/admin?filter=${filter}`, {
         headers: { Authorization: auth },
       });
-      if (res.status === 401) { 
-        setAuthed(false); 
-        return; 
+      if (res.status === 401) {
+        setAuthed(false);
+        return;
       }
       const data = await res.json();
       setComplaints(data.complaints || []);
+      setStats(data.stats || stats);
     } catch (error) {
       console.error('Failed to fetch complaints:', error);
     }
@@ -50,29 +54,38 @@ export default function AdminPanel() {
     }
   };
 
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (password.length > 0) {
+      setAuthed(true);
+    }
+  };
+
   // Login Screen
   if (!authed) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-terracotta-50 via-white to-teal-50 flex items-center justify-center p-4">
-        <Card variant="glass" className="max-w-sm w-full text-center">
-          <div className="text-5xl mb-4">🔐</div>
-          <h1 className="text-3xl font-black text-terracotta-600 mb-2">DIDI Admin</h1>
-          <p className="text-sm text-gray-500 mb-6">Enter admin password to continue</p>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && setAuthed(true)}
-            placeholder="Admin Password"
-            className="input-field mb-4"
-          />
-          <Button 
-            onClick={() => setAuthed(true)} 
-            variant="primary"
-            className="w-full"
-          >
-            🚀 Login
-          </Button>
+      <div className="min-h-screen bg-gradient-to-br from-[#1D3557] to-[#457B9D] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-[#E63946] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-black text-gray-900 mb-2">DIDI Admin Panel</h1>
+            <p className="text-gray-600">Authorized personnel only</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <Input
+              type="password"
+              label="Admin Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter admin password"
+              required
+            />
+            <Button type="submit" className="w-full">
+              Login
+            </Button>
+          </form>
         </Card>
       </div>
     );
@@ -80,150 +93,163 @@ export default function AdminPanel() {
 
   // Admin Dashboard
   return (
-    <div className="min-h-screen bg-gradient-to-br from-terracotta-50 via-white to-teal-50 p-4">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <Card className="mb-6">
+    <div className="min-h-screen bg-[#F8F9FA]">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-black text-terracotta-600 mb-1 flex items-center gap-2">
-                <span>🛡️</span> DIDI Admin Panel
-              </h1>
-              <p className="text-sm text-gray-500">Review and moderate citizen complaints</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#E63946] rounded-full flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-black text-gray-900">DIDI Admin</h1>
+                <p className="text-sm text-gray-500">Complaint Management</p>
+              </div>
             </div>
-            <Button 
-              onClick={() => { setAuthed(false); setPassword(''); }} 
-              variant="ghost"
-              size="sm"
-            >
+            <Button variant="ghost" onClick={() => setAuthed(false)}>
               Logout
             </Button>
           </div>
-        </Card>
-
-        {/* Filters */}
-        <div className="flex gap-2 mb-6">
-          <button 
-            onClick={() => setFilter('pending')} 
-            className={`px-4 py-2 text-sm rounded-full font-semibold transition ${
-              filter === 'pending' 
-                ? 'bg-terracotta-500 text-white shadow-md' 
-                : 'bg-white text-gray-600 border hover:bg-gray-50'
-            }`}
-          >
-            ⏳ Pending
-          </button>
-          <button 
-            onClick={() => setFilter('all')} 
-            className={`px-4 py-2 text-sm rounded-full font-semibold transition ${
-              filter === 'all' 
-                ? 'bg-terracotta-500 text-white shadow-md' 
-                : 'bg-white text-gray-600 border hover:bg-gray-50'
-            }`}
-          >
-            📋 All
-          </button>
-          <button 
-            onClick={fetchComplaints} 
-            className="px-4 py-2 text-sm bg-white border rounded-full text-gray-600 hover:bg-gray-50 font-semibold transition"
-          >
-            🔄 Refresh
-          </button>
         </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card className="stat-card">
+            <TrendingUp className="w-8 h-8 text-gray-700 mx-auto mb-2" />
+            <div className="text-3xl font-black font-mono text-gray-900 mb-1">{stats.total}</div>
+            <div className="text-sm font-semibold text-gray-600">Total Issues</div>
+          </Card>
+          <Card className="stat-card">
+            <Clock className="w-8 h-8 text-[#F77F00] mx-auto mb-2" />
+            <div className="text-3xl font-black font-mono text-[#F77F00] mb-1">{stats.pending}</div>
+            <div className="text-sm font-semibold text-gray-600">Pending</div>
+          </Card>
+          <Card className="stat-card">
+            <CheckCircle className="w-8 h-8 text-[#2A9D8F] mx-auto mb-2" />
+            <div className="text-3xl font-black font-mono text-[#2A9D8F] mb-1">{stats.resolved}</div>
+            <div className="text-sm font-semibold text-gray-600">Resolved</div>
+          </Card>
+          <Card className="stat-card">
+            <XCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
+            <div className="text-3xl font-black font-mono text-red-600 mb-1">{stats.rejected}</div>
+            <div className="text-sm font-semibold text-gray-600">Rejected</div>
+          </Card>
+        </div>
+
+        {/* Filter Tabs */}
+        <Card className="mb-6">
+          <Tabs
+            tabs={[
+              { id: 'pending', label: 'Pending' },
+              { id: 'in-progress', label: 'In Progress' },
+              { id: 'resolved', label: 'Resolved' },
+              { id: 'rejected', label: 'Rejected' },
+              { id: 'all', label: 'All' }
+            ]}
+            activeTab={filter}
+            onChange={setFilter}
+          />
+        </Card>
 
         {/* Complaints List */}
         {loading ? (
           <div className="space-y-4">
-            <Skeleton variant="card" />
-            <Skeleton variant="card" />
-            <Skeleton variant="card" />
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} variant="card" />
+            ))}
           </div>
         ) : complaints.length === 0 ? (
           <Card className="text-center py-16">
-            <div className="text-6xl mb-3">✅</div>
-            <p className="text-xl font-bold text-gray-700 mb-2">All caught up!</p>
-            <p className="text-gray-500">No complaints to review at the moment.</p>
+            <p className="text-gray-500">No complaints in this category</p>
           </Card>
         ) : (
           <div className="space-y-4">
-            {complaints.map((c) => (
-              <Card key={c.id} className="hover:shadow-xl transition-shadow">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-3 flex-wrap gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-mono text-gray-400">#{c.id}</span>
-                    <Badge variant={
-                      c.status === 'pending' ? 'warning' :
-                      c.status === 'approved' ? 'success' :
-                      c.status === 'resolved' ? 'secondary' :
-                      'danger'
-                    }>
-                      {c.status}
-                    </Badge>
-                    <Badge variant="default">{c.category}</Badge>
-                  </div>
-                  <span className="text-xs text-gray-400">
-                    {new Date(c.created_at).toLocaleString('en-IN', { 
-                      dateStyle: 'short', 
-                      timeStyle: 'short' 
-                    })}
-                  </span>
-                </div>
+            {complaints.map((complaint) => (
+              <Card key={complaint.id} className="hover:border-gray-200 transition-colors">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                  {/* Left: Complaint Info */}
+                  <div className="flex-1">
+                    <div className="flex items-start gap-3 mb-3">
+                      <Badge variant={
+                        complaint.status === 'resolved' ? 'success' :
+                        complaint.status === 'rejected' ? 'gray' :
+                        complaint.status === 'in-progress' ? 'warning' :
+                        'primary'
+                      }>
+                        {complaint.status}
+                      </Badge>
+                      <Badge variant="gray">{complaint.category}</Badge>
+                    </div>
 
-                {/* Description */}
-                <p className="text-sm text-gray-700 mb-4 leading-relaxed bg-gray-50 p-3 rounded-xl">
-                  {c.description}
-                </p>
+                    <h3 className="font-bold text-gray-900 mb-2">
+                      {complaint.title || complaint.description?.substring(0, 80) + '...'}
+                    </h3>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  {/* Citizen Info */}
-                  <div className="text-xs text-gray-500 space-y-1">
-                    <p className="flex items-center gap-1">
-                      <span>👤</span>
-                      <strong>{c.name || 'Anonymous'}</strong>
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      {complaint.description}
                     </p>
-                    <p className="flex items-center gap-1">
-                      <span>📱</span>
-                      {c.whatsapp}
-                    </p>
-                    {c.email && (
-                      <p className="flex items-center gap-1">
-                        <span>📧</span>
-                        {c.email}
-                      </p>
+
+                    <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+                      <span>📍 {complaint.location}</span>
+                      <span>🗺️ {complaint.ward}</span>
+                      {complaint.phone && <span>📞 {complaint.phone}</span>}
+                      <span>📅 {new Date(complaint.created_at).toLocaleDateString()}</span>
+                    </div>
+
+                    {complaint.photo_url && (
+                      <div className="mt-3">
+                        <img
+                          src={complaint.photo_url}
+                          alt="Issue"
+                          className="w-32 h-32 object-cover rounded-lg"
+                        />
+                      </div>
                     )}
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 flex-wrap">
-                    {c.status === 'pending' && (
+                  {/* Right: Actions */}
+                  <div className="flex md:flex-col gap-2 md:min-w-[140px]">
+                    {complaint.status === 'pending' && (
                       <>
-                        <Button 
-                          onClick={() => handleAction(c.id, 'approved')} 
+                        <Button
                           size="sm"
-                          className="bg-green-500 hover:bg-green-600 text-white"
+                          variant="secondary"
+                          onClick={() => handleAction(complaint.id, 'in-progress')}
+                          className="flex-1 md:flex-none"
                         >
-                          ✅ Approve
+                          Start Review
                         </Button>
-                        <Button 
-                          onClick={() => handleAction(c.id, 'rejected')} 
+                        <Button
                           size="sm"
-                          className="bg-red-500 hover:bg-red-600 text-white"
+                          variant="danger"
+                          onClick={() => handleAction(complaint.id, 'rejected')}
+                          className="flex-1 md:flex-none"
                         >
-                          ❌ Reject
+                          Reject
                         </Button>
                       </>
                     )}
-                    {c.status === 'approved' && (
-                      <Button 
-                        onClick={() => handleAction(c.id, 'resolved')} 
-                        variant="secondary"
+                    {complaint.status === 'in-progress' && (
+                      <Button
                         size="sm"
+                        onClick={() => handleAction(complaint.id, 'resolved')}
+                        className="w-full"
                       >
-                        ✅ Mark Resolved
+                        Mark Resolved
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => window.open(`/complaints/${complaint.id}`, '_blank')}
+                      className="w-full"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      View
+                    </Button>
                   </div>
                 </div>
               </Card>

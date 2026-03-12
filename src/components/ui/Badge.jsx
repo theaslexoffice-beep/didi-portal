@@ -1,28 +1,14 @@
-export default function Badge({ 
-  children, 
-  variant = 'default', 
-  className = '',
-  ...props 
-}) {
+export default function Badge({ children, variant = 'gray', className = '' }) {
   const variants = {
-    default: "bg-gray-100 text-gray-700",
-    primary: "bg-terracotta-100 text-terracotta-700",
-    secondary: "bg-teal-100 text-teal-700",
-    success: "bg-green-100 text-green-700",
-    warning: "bg-yellow-100 text-yellow-700",
-    danger: "bg-red-100 text-red-700",
-    p0: "bg-red-500 text-white animate-pulse-glow",
-    p1: "bg-orange-500 text-white",
-    p2: "bg-yellow-500 text-white",
-    p3: "bg-blue-500 text-white",
-    p4: "bg-gray-400 text-white"
+    primary: 'bg-[#E63946]/10 text-[#E63946]',
+    success: 'bg-[#2A9D8F]/10 text-[#2A9D8F]',
+    warning: 'bg-[#F77F00]/10 text-[#F77F00]',
+    secondary: 'bg-[#1D3557]/10 text-[#1D3557]',
+    gray: 'bg-gray-100 text-gray-700'
   };
   
   return (
-    <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${variants[variant]} ${className}`}
-      {...props}
-    >
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${variants[variant]} ${className}`}>
       {children}
     </span>
   );

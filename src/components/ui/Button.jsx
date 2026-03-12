@@ -4,31 +4,32 @@ export default function Button({
   size = 'md', 
   className = '', 
   disabled = false,
-  onClick,
   type = 'button',
+  onClick,
   ...props 
 }) {
-  const baseStyles = "font-bold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none";
+  const baseClass = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variants = {
-    primary: "bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white",
-    secondary: "bg-gradient-to-r from-teal-500 to-teal-600 text-white",
-    outline: "border-2 border-terracotta-500 text-terracotta-600 hover:bg-terracotta-50 bg-white",
-    ghost: "bg-gray-200 text-gray-700 hover:bg-gray-300"
+    primary: 'px-6 py-3 bg-[#E63946] text-white hover:bg-[#D62839] focus:ring-2 focus:ring-[#E63946]/50',
+    secondary: 'px-6 py-3 bg-[#1D3557] text-white hover:bg-[#152A45] focus:ring-2 focus:ring-[#1D3557]/50',
+    ghost: 'px-6 py-3 text-gray-700 hover:bg-gray-100 focus:ring-2 focus:ring-gray-300/50',
+    danger: 'px-6 py-3 bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500/50',
+    outline: 'px-6 py-3 border-2 border-[#E63946] text-[#E63946] hover:bg-[#E63946]/5'
   };
   
   const sizes = {
-    sm: "px-4 py-2 text-sm",
-    md: "px-6 py-3 text-base",
-    lg: "px-8 py-4 text-lg"
+    sm: 'text-sm px-4 py-2',
+    md: '',
+    lg: 'text-lg px-8 py-4'
   };
   
   return (
     <button
       type={type}
-      onClick={onClick}
       disabled={disabled}
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      onClick={onClick}
+      className={`${baseClass} ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
       {children}

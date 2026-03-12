@@ -1,26 +1,13 @@
-export default function Skeleton({ 
-  variant = 'text', 
-  width = 'full', 
-  height = 'auto',
-  className = ''
-}) {
+export default function Skeleton({ className = '', variant = 'default' }) {
   const variants = {
-    text: "h-4 bg-gray-200 rounded",
-    title: "h-8 bg-gray-200 rounded",
-    card: "h-48 bg-gray-200 rounded-2xl",
-    circle: "w-12 h-12 bg-gray-200 rounded-full",
-    button: "h-12 bg-gray-200 rounded-full"
+    default: 'h-4 w-full',
+    text: 'h-4 w-3/4',
+    title: 'h-8 w-1/2',
+    circle: 'h-12 w-12 rounded-full',
+    card: 'h-48 w-full rounded-2xl'
   };
-  
-  const widths = {
-    full: "w-full",
-    half: "w-1/2",
-    third: "w-1/3",
-    quarter: "w-1/4"
-  };
-  
+
   return (
-    <div className={`animate-pulse ${variants[variant]} ${typeof width === 'string' ? widths[width] : ''} ${className}`} style={{ width: typeof width === 'number' ? `${width}px` : undefined, height: typeof height === 'number' ? `${height}px` : undefined }}>
-    </div>
+    <div className={`animate-pulse bg-gray-200 rounded ${variants[variant]} ${className}`} />
   );
 }

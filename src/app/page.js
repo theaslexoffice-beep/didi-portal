@@ -1,183 +1,188 @@
 'use client';
+import { useState } from 'react';
 
-import { useState, useEffect } from 'react';
-import { translations } from '@/i18n/translations';
+// Layout Components
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import MobileNav from '@/components/layout/MobileNav';
 
-// Components
-import Navbar from '@/components/Navbar';
-import Hero from '@/components/Hero';
-import Footer from '@/components/Footer';
-import IssuesList from '@/components/IssuesList';
-import RegisterForm from '@/components/RegisterForm';
-import SchemesFinder from '@/components/SchemesFinder';
-import LegalAid from '@/components/LegalAid';
-import ChatBot from '@/components/ChatBot';
-import ProfilePage from '@/components/ProfilePage';
-import Card from '@/components/ui/Card';
+// Home Components
+import Hero from '@/components/home/Hero';
+import HowItWorks from '@/components/home/HowItWorks';
+import RecentIssues from '@/components/home/RecentIssues';
+import QuickAccess from '@/components/home/QuickAccess';
 
-// ============ HOOKS ============
-function useLang() {
-  const [lang, setLang] = useState('en');
-  const t = translations[lang] || translations.en;
-  return { lang, setLang, t };
-}
+// Issues Components
+import IssuesList from '@/components/issues/IssuesList';
+import ComplaintForm from '@/components/issues/ComplaintForm';
 
-function useAuth() {
-  const [citizen, setCitizen] = useState(null);
-  
-  useEffect(() => {
-    const stored = localStorage.getItem('didi_citizen');
-    if (stored) setCitizen(JSON.parse(stored));
-  }, []);
-  
-  const saveCitizen = (c) => {
-    setCitizen(c);
-    localStorage.setItem('didi_citizen', JSON.stringify(c));
-  };
-  
-  const logout = () => {
-    setCitizen(null);
-    localStorage.removeItem('didi_citizen');
-  };
-  
-  return { citizen, saveCitizen, logout };
-}
+// Schemes Components
+import SchemesList from '@/components/schemes/SchemesList';
 
-// ============ HOME SECTIONS ============
-function HowItWorks({ t }) {
-  const steps = [
-    { icon: '📱', title: t.howItWorks?.step1Title || 'Report', desc: t.howItWorks?.step1Desc || 'Citizen reports via any channel', color: 'from-blue-400 to-blue-600' },
-    { icon: '🧠', title: t.howItWorks?.step2Title || 'AI Classifies', desc: t.howItWorks?.step2Desc || 'Severity + category auto-assigned', color: 'from-purple-400 to-purple-600' },
-    { icon: '🤝', title: t.howItWorks?.step3Title || 'Match', desc: t.howItWorks?.step3Desc || 'Nearest helper found in <60 seconds', color: 'from-teal-400 to-teal-600' },
-    { icon: '⚖️', title: t.howItWorks?.step4Title || 'Escalate', desc: t.howItWorks?.step4Desc || 'If unresolved → RTI → Legal Notice → High Court', color: 'from-terracotta-400 to-terracotta-600' }
-  ];
-  
-  return (
-    <section className="max-w-6xl mx-auto py-16 px-4">
-      <div className="text-center mb-12">
-        <h2 className="text-4xl sm:text-5xl font-black text-gray-800 mb-3">
-          {t.howItWorks?.title || 'How DIDI Works'}
-        </h2>
-        <p className="text-gray-600 text-lg">{t.howItWorks?.subtitle || 'From problem to solution in 4 steps'}</p>
-      </div>
-      
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {steps.map((step, i) => (
-          <div key={i} className="relative">
-            <Card hover>
-              <div className={`w-16 h-16 bg-gradient-to-br ${step.color} rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
-                {step.icon}
-              </div>
-              <div className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center font-black text-gray-400 text-sm">
-                {i + 1}
-              </div>
-              <h3 className="font-black text-xl text-gray-800 mb-2">{step.title}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{step.desc}</p>
-            </Card>
-            {i < steps.length - 1 && (
-              <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2 text-3xl text-gray-300">
-                →
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+// Legal Components
+import LegalHub from '@/components/legal/LegalHub';
 
-function Pillars({ t, setActiveTab }) {
-  const pillars = [
-    { key: 'samadhan', icon: '🚨', color: 'from-red-400 to-red-600', action: () => setActiveTab('issues') },
-    { key: 'sarkar', icon: '🏛️', color: 'from-blue-400 to-blue-600', action: () => setActiveTab('schemes') },
-    { key: 'nyaay', icon: '⚖️', color: 'from-purple-400 to-purple-600', action: () => setActiveTab('legal') },
-    { key: 'samaj', icon: '🤝', color: 'from-teal-400 to-teal-600', action: () => setActiveTab('register') },
-    { key: 'data', icon: '📊', color: 'from-green-400 to-green-600', action: null },
-    { key: 'awaaz', icon: '📢', color: 'from-orange-400 to-orange-600', action: null },
-    { key: 'connect', icon: '📱', color: 'from-indigo-400 to-indigo-600', action: () => setActiveTab('chat') }
-  ];
-  
-  return (
-    <section className="max-w-7xl mx-auto py-16 px-4 bg-white/50 rounded-3xl my-8">
-      <div className="text-center mb-12">
-        <h2 className="text-4xl sm:text-5xl font-black text-gray-800 mb-3">
-          {t.pillars?.title || 'The 7 Pillars of DIDI'}
-        </h2>
-        <p className="text-gray-600 text-lg">{t.pillars?.subtitle || 'A complete ecosystem for citizen empowerment'}</p>
-      </div>
-      
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {pillars.map((pillar, i) => {
-          const data = t.pillars?.[pillar.key] || { name: pillar.key, desc: 'Coming soon' };
-          return (
-            <Card 
-              key={i} 
-              hover={!!pillar.action}
-              onClick={pillar.action}
-              className={pillar.action ? 'cursor-pointer' : ''}
-            >
-              <div className={`w-14 h-14 bg-gradient-to-br ${pillar.color} rounded-xl flex items-center justify-center text-2xl mb-3 shadow-md group-hover:scale-110 transition-transform`}>
-                {pillar.icon}
-              </div>
-              <h3 className="font-black text-lg text-gray-800 mb-1">{data.name}</h3>
-              <p className="text-sm text-gray-600">{data.desc}</p>
-            </Card>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
+// Chat Component
+import ChatBot from '@/components/chat/ChatBot';
 
-// ============ MAIN APP ============
+// Auth Components
+import LoginForm from '@/components/auth/LoginForm';
+
+// Profile Component
+import ProfilePage from '@/components/profile/ProfilePage';
+
+// UI Components
+import Modal from '@/components/ui/Modal';
+
 export default function Home() {
-  const { lang, setLang, t } = useLang();
-  const { citizen, saveCitizen, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('home');
+  const [language, setLanguage] = useState('en');
+  const [showComplaintForm, setShowComplaintForm] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [user, setUser] = useState(null);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    // Scroll to top on tab change
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    setShowLoginModal(false);
+    // Could also set to localStorage/cookies
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return (
+          <>
+            <Hero lang={language} onTabChange={handleTabChange} />
+            <HowItWorks lang={language} />
+            <RecentIssues lang={language} onViewAll={() => handleTabChange('issues')} />
+            <QuickAccess lang={language} onTabChange={handleTabChange} />
+          </>
+        );
+
+      case 'issues':
+        return (
+          <IssuesList
+            lang={language}
+            onNewIssue={() => {
+              if (!user) {
+                setShowLoginModal(true);
+              } else {
+                setShowComplaintForm(true);
+              }
+            }}
+            onIssueClick={(issue) => {
+              // Could open issue detail modal
+              console.log('Issue clicked:', issue);
+            }}
+          />
+        );
+
+      case 'schemes':
+        return (
+          <SchemesList
+            lang={language}
+            onSchemeClick={(scheme) => {
+              // Could open scheme detail modal
+              console.log('Scheme clicked:', scheme);
+            }}
+          />
+        );
+
+      case 'legal':
+        return (
+          <LegalHub
+            lang={language}
+            onToolClick={(toolId) => {
+              // Could open legal tool modal
+              console.log('Legal tool clicked:', toolId);
+            }}
+          />
+        );
+
+      case 'chat':
+        return <ChatBot lang={language} />;
+
+      case 'profile':
+        return user ? (
+          <ProfilePage lang={language} user={user} />
+        ) : (
+          <div className="py-20 text-center">
+            <p className="text-gray-600 mb-4">
+              {language === 'en' ? 'Please login to view your profile' : 'अपनी प्रोफ़ाइल देखने के लिए कृपया लॉगिन करें'}
+            </p>
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className="btn-primary"
+            >
+              {language === 'en' ? 'Login' : 'लॉग इन'}
+            </button>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
-    <main className="min-h-screen">
-      <Navbar 
-        lang={lang} 
-        setLang={setLang} 
-        t={t} 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        citizen={citizen} 
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <Header
+        onLanguageChange={setLanguage}
+        currentLang={language}
+        onTabChange={handleTabChange}
+        activeTab={activeTab}
       />
 
-      <div className="tab-content">
-        {activeTab === 'home' && (
-          <>
-            <Hero t={t} setActiveTab={setActiveTab} citizen={citizen} />
-            <HowItWorks t={t} />
-            <Pillars t={t} setActiveTab={setActiveTab} />
-          </>
-        )}
-        {activeTab === 'register' && (
-          <RegisterForm t={t} saveCitizen={saveCitizen} setActiveTab={setActiveTab} />
-        )}
-        {activeTab === 'issues' && (
-          <IssuesList t={t} citizen={citizen} setActiveTab={setActiveTab} />
-        )}
-        {activeTab === 'schemes' && (
-          <SchemesFinder t={t} />
-        )}
-        {activeTab === 'legal' && (
-          <LegalAid t={t} />
-        )}
-        {activeTab === 'chat' && (
-          <ChatBot t={t} lang={lang} />
-        )}
-        {activeTab === 'profile' && (
-          <ProfilePage t={t} citizen={citizen} logout={logout} setActiveTab={setActiveTab} />
-        )}
-      </div>
+      {/* Main Content */}
+      <main className="flex-1 pb-20 md:pb-0">
+        {renderContent()}
+      </main>
 
-      <Footer t={t} />
-      
-      {/* Mobile Bottom Nav Spacer */}
-      <div className="md:hidden h-20"></div>
-    </main>
+      {/* Footer */}
+      <Footer lang={language} />
+
+      {/* Mobile Bottom Navigation */}
+      <MobileNav
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        lang={language}
+      />
+
+      {/* Modals */}
+      <Modal
+        isOpen={showComplaintForm}
+        onClose={() => setShowComplaintForm(false)}
+        title={language === 'en' ? 'Report an Issue' : 'शिकायत दर्ज करें'}
+        size="lg"
+      >
+        <ComplaintForm
+          lang={language}
+          onClose={() => setShowComplaintForm(false)}
+          onSubmit={(data) => {
+            console.log('Complaint submitted:', data);
+            setShowComplaintForm(false);
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        size="sm"
+      >
+        <LoginForm
+          lang={language}
+          onSuccess={handleLogin}
+          onClose={() => setShowLoginModal(false)}
+        />
+      </Modal>
+    </div>
   );
 }
