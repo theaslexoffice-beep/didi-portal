@@ -1,26 +1,23 @@
 import { NextResponse } from 'next/server';
-import { getCGSchemes } from '@/lib/scheme-matcher';
+import * as db from '@/lib/data';
 
-/**
- * GET /api/schemes/cg
- * Get all Chhattisgarh state-specific schemes
- */
 export async function GET(request) {
   try {
-    const cgSchemes = getCGSchemes();
+    // Get all schemes
+    let schemes = await db.getAllSchemes();
+    
+    // Filter for state-level CG schemes
+    schemes = schemes.filter(s => s.level === 'state');
 
     return NextResponse.json({
       success: true,
-      schemes: cgSchemes,
-      count: cgSchemes.length,
-      state: 'Chhattisgarh',
-      description: 'All Chhattisgarh state government schemes'
+      data: schemes,
+      count: schemes.length
     });
-
   } catch (error) {
-    console.error('Get CG schemes error:', error);
+    console.error('GET /api/schemes/cg error:', error);
     return NextResponse.json(
-      { success: false, error: 'Server error', message: error.message },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

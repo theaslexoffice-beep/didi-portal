@@ -1,43 +1,52 @@
 import { NextResponse } from 'next/server';
-import { createHelpResponse, getHelpResponsesByIssue, incrementHelpCount } from '@/lib/data';
+import * as db from '@/lib/data';
 
 export async function POST(request, { params }) {
   try {
     const { id } = params;
-    const { citizen_id, message } = await request.json();
-    
-    if (!citizen_id) {
-      return NextResponse.json({ success: false, error: 'Citizen ID required' }, { status: 400 });
-    }
-    
-    const responseId = await createHelpResponse({
-      issue_id: parseInt(id),
-      citizen_id: parseInt(citizen_id),
-      message
-    });
-    
-    // Increment helper's help count
-await incrementHelpCount(parseInt(citizen_id));
-    
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Help offer recorded',
-      response_id: responseId
-    });
-  } catch (error) {
-    console.error('Help response error:', error);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
-  }
-}
+    const body = await request.json();
+    const { citizen_id, message, help_type } = body;
 
-export async function GET(request, { params }) {
-  try {
-    const { id } = params;
-    const responses = await getHelpResponsesByIssue(parseInt(id));
-    
-    return NextResponse.json({ success: true, responses });
+    if (!id || !citizen_id || !message) {
+      return NextResponse.json(
+        { success: false, error: 'Issue ID, citizen_id, and message are required' },
+        { status: 400 }
+      );
+    }
+
+    // Create help response
+    const helpId = await db.createHelpResponse({
+      issue_id: parseInt(id),
+      citizen_id,
+      message,
+      help_type: help_type || 'offer',
+      status: 'offered'
+    });
+
+    // Create community activity entry
+    await db.createCommunityActivity({
+      citizen_id,
+      activity_type: 'help_offered',
+      description: `Offered help on issue #${id}`,
+      issue_id: parseInt(id)
+    });
+
+    // Increment helper's help count
+    await db.incrementHelpCount(citizen_id);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        help_id: helpId,
+        issue_id: id,
+        citizen_id
+      }
+    });
   } catch (error) {
-    console.error('Get help responses error:', error);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    console.error('POST /api/issues/[id]/help error:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }

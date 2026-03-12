@@ -1,22 +1,29 @@
 import { NextResponse } from 'next/server';
-import { getAchievements } from '@/lib/community';
+import * as db from '@/lib/data';
 
 export async function GET(request, { params }) {
   try {
     const { id } = params;
-    
-    const achievements = await getAchievements(parseInt(id));
-    
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'Citizen ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get achievements for citizen
+    const achievements = await db.getCitizenAchievements(parseInt(id));
+
     return NextResponse.json({
       success: true,
-      citizen_id: parseInt(id),
-      count: achievements.length,
-      achievements
+      data: achievements,
+      count: achievements.length
     });
   } catch (error) {
-    console.error('Error fetching achievements:', error);
+    console.error('GET /api/citizens/[id]/achievements error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch achievements' },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

@@ -1,75 +1,75 @@
 import { NextResponse } from 'next/server';
-import { getAllSchemes, getSchemeById } from '@/lib/data';
-import { getDocumentChecklist, generatePrintableChecklist, getApplicationSequence } from '@/lib/scheme-documents';
+import * as db from '@/lib/data';
 
-/**
- * GET /api/schemes/documents
- * 
- * Query parameters:
- * - scheme_ids: comma-separated scheme IDs (e.g., "1,2,3")
- * - printable: true (returns printable format)
- * - sequence: true (returns application sequence)
- */
-export async function GET(request) {
+export async function POST(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const schemeIds = searchParams.get('scheme_ids');
-    const printable = searchParams.get('printable') === 'true';
-    const sequence = searchParams.get('sequence') === 'true';
+    const body = await request.json();
+    const { scheme_id, citizen_profile } = body;
 
-    if (!schemeIds) {
+    if (!scheme_id) {
       return NextResponse.json(
-        { success: false, error: 'scheme_ids parameter required (comma-separated IDs)' },
+        { success: false, error: 'scheme_id is required' },
         { status: 400 }
       );
     }
 
-    // Parse scheme IDs
-    const ids = schemeIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
-
-    if (ids.length === 0) {
+    const scheme = await db.getSchemeById(parseInt(scheme_id));
+    
+    if (!scheme) {
       return NextResponse.json(
-        { success: false, error: 'Valid scheme IDs required' },
-        { status: 400 }
-      );
-    }
-
-    // Fetch schemes
-    const schemes = ids.map(id => getSchemeById(id)).filter(s => s !== null && s !== undefined);
-
-    if (schemes.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'No valid schemes found' },
+        { success: false, error: 'Scheme not found' },
         { status: 404 }
       );
     }
 
-    // Generate checklist
-    if (printable) {
-      const checklist = generatePrintableChecklist(schemes);
-      return NextResponse.json({ success: true, ...checklist });
-    } else if (sequence) {
-      const checklist = getDocumentChecklist(schemes);
-      const sequenced = getApplicationSequence(checklist.documents);
-      return NextResponse.json({
-        success: true,
-        sequence: sequenced,
-        summary: checklist.summary,
-        schemes: schemes.map(s => s.name)
-      });
-    } else {
-      const checklist = getDocumentChecklist(schemes);
-      return NextResponse.json({
-        success: true,
-        ...checklist,
-        schemes: schemes.map(s => s.name)
-      });
+    // Parse documents_needed
+    let requiredDocs = [];
+    if (scheme.documents_needed) {
+      try {
+        requiredDocs = typeof scheme.documents_needed === 'string'
+          ? JSON.parse(scheme.documents_needed)
+          : scheme.documents_needed;
+      } catch {
+        requiredDocs = [];
+      }
     }
 
+    // If citizen profile is provided, customize document list based on their situation
+    if (citizen_profile) {
+      const profile = citizen_profile;
+      
+      // Add conditional documents based on profile
+      if (profile.category && ['sc', 'st', 'obc'].includes(profile.category)) {
+        if (!requiredDocs.includes('Caste Certificate')) {
+          requiredDocs.push('Caste Certificate');
+        }
+      }
+      
+      if (profile.income && profile.income < 100000) {
+        if (!requiredDocs.includes('Income Certificate')) {
+          requiredDocs.push('Income Certificate');
+        }
+      }
+      
+      if (profile.hasLand) {
+        if (!requiredDocs.includes('Land Records (Khasra/Khatauni)')) {
+          requiredDocs.push('Land Records (Khasra/Khatauni)');
+        }
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        scheme_id,
+        scheme_name: scheme.name,
+        required_documents: requiredDocs
+      }
+    });
   } catch (error) {
-    console.error('Get document checklist error:', error);
+    console.error('POST /api/schemes/documents error:', error);
     return NextResponse.json(
-      { success: false, error: 'Server error', message: error.message },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

@@ -5,21 +5,23 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const ward = searchParams.get('ward');
-    const period = searchParams.get('period') || 'month'; // month, week, all-time
-    
-    const leaderboard = await getLeaderboard(ward, period);
-    
+    const period = searchParams.get('period') || 'month';
+
+    // Get leaderboard
+    const leaderboard = getLeaderboard(ward, period);
+
     return NextResponse.json({
       success: true,
-      ward: ward || 'All Wards',
-      period,
-      count: leaderboard.length,
-      leaderboard
+      data: {
+        ward: ward || 'all',
+        period,
+        leaderboard
+      }
     });
   } catch (error) {
-    console.error('Error fetching leaderboard:', error);
+    console.error('GET /api/community/leaderboard error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch leaderboard' },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

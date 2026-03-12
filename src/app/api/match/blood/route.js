@@ -4,34 +4,45 @@ import { findCompatibleDonors } from '@/lib/matcher';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { blood_group, lat, lng, radius } = body;
-    
-    if (!blood_group || !lat || !lng) {
+    const { blood_group, location, urgency } = body;
+
+    // Validate required fields
+    if (!blood_group || !location) {
       return NextResponse.json(
-        { error: 'blood_group, lat, and lng are required' },
+        { success: false, error: 'blood_group and location (lat, lng) are required' },
         { status: 400 }
       );
     }
+
+    const { lat, lng } = location;
     
-    const donors = findCompatibleDonors(
-      blood_group,
-      parseFloat(lat),
-      parseFloat(lng),
-      radius ? parseFloat(radius) : 15
-    );
-    
+    if (!lat || !lng) {
+      return NextResponse.json(
+        { success: false, error: 'location must include lat and lng' },
+        { status: 400 }
+      );
+    }
+
+    // Determine radius based on urgency
+    const radius = urgency === 'critical' ? 20 : urgency === 'urgent' ? 15 : 10;
+
+    // Find compatible donors
+    const donors = findCompatibleDonors(blood_group, lat, lng, radius);
+
     return NextResponse.json({
       success: true,
-      blood_group,
-      location: { lat: parseFloat(lat), lng: parseFloat(lng) },
-      radius: radius || 15,
-      count: donors.length,
-      donors
+      data: {
+        blood_group,
+        total_donors: donors.length,
+        donors,
+        search_radius_km: radius,
+        emergency_number: '108'
+      }
     });
   } catch (error) {
-    console.error('Error in blood donor matching:', error);
+    console.error('POST /api/match/blood error:', error);
     return NextResponse.json(
-      { error: 'Blood donor matching failed' },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

@@ -1,58 +1,58 @@
 import { NextResponse } from 'next/server';
-import { createIssue, getIssues, getIssueStats } from '@/lib/data';
-import { classifySeverity } from '@/lib/severity';
+import * as db from '@/lib/data';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
-    const severity = searchParams.get('severity');
-    const status = searchParams.get('status') || 'open';
     const ward = searchParams.get('ward');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
-    
-    const issues = await getIssues({ category, severity, status, ward, limit, offset });
-    const stats = await getIssueStats();
-    
-    // Parse JSON fields
-    issues.forEach(issue => {
-      if (issue.media_urls) issue.media_urls = JSON.parse(issue.media_urls);
-      if (issue.matched_helpers) issue.matched_helpers = JSON.parse(issue.matched_helpers);
-      if (issue.escalation_history) issue.escalation_history = JSON.parse(issue.escalation_history);
-    });
-    
-    return NextResponse.json({ success: true, issues, stats });
-  } catch (error) {
-    console.error('Get issues error:', error);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
-  }
-}
+    const status = searchParams.get('status');
+    const sort = searchParams.get('sort') || 'newest';
 
-export async function POST(request) {
-  try {
-    const data = await request.json();
+    // Get all issues
+    let issues = await db.getIssues();
     
-    if (!data.description) {
-      return NextResponse.json({ success: false, error: 'Description is required' }, { status: 400 });
+    // Apply filters
+    if (category) {
+      issues = issues.filter(i => i.category === category);
+    }
+    if (ward) {
+      issues = issues.filter(i => i.ward === ward);
+    }
+    if (status) {
+      issues = issues.filter(i => i.status === status);
     }
     
-    // Auto-classify severity using AI
-    const severity = data.severity || classifySeverity(data.description);
-    
-    const issueId = await createIssue({
-      ...data,
-      severity
-    });
-    
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Issue created',
-      issue_id: issueId,
-      severity
+    // Apply sorting
+    switch (sort) {
+      case 'most_upvoted':
+        issues.sort((a, b) => 
+          (b.upvote_count || 0) - (a.upvote_count || 0)
+        );
+        break;
+      case 'most_urgent':
+        const severityOrder = { P0: 0, P1: 1, P2: 2, P3: 3, P4: 4 };
+        issues.sort((a, b) => {
+          const severityDiff = severityOrder[a.severity || 'P3'] - severityOrder[b.severity || 'P3'];
+          if (severityDiff !== 0) return severityDiff;
+          return (b.upvote_count || 0) - (a.upvote_count || 0);
+        });
+        break;
+      default: // newest
+        issues.sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: issues
     });
   } catch (error) {
-    console.error('Create issue error:', error);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    console.error('GET /api/issues error:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }

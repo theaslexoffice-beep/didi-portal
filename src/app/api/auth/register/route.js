@@ -1,43 +1,66 @@
 import { NextResponse } from 'next/server';
-import { createCitizen, getCitizenByPhone } from '@/lib/data';
+import * as db from '@/lib/data';
 
 export async function POST(request) {
   try {
-    const { name, phone, email } = await request.json();
-    
-    // Validate
+    const body = await request.json();
+    const { name, phone, ward, language } = body;
+
+    // Validate required fields
     if (!name || !phone) {
-      return NextResponse.json({ success: false, error: 'Name and phone are required' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: 'Name and phone are required' },
+        { status: 400 }
+      );
     }
-    
-    if (phone.replace(/\D/g, '').length < 10) {
-      return NextResponse.json({ success: false, error: 'Invalid phone number' }, { status: 400 });
+
+    // Validate phone number (10 digits)
+    const phoneClean = phone.replace(/\D/g, '');
+    if (phoneClean.length !== 10) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid phone number (must be 10 digits)' },
+        { status: 400 }
+      );
     }
-    
-    // Check if already exists
-    const existing = await getCitizenByPhone(phone);
+
+    // Check if citizen already exists
+    const existing = await db.getCitizenByPhone(phoneClean);
     if (existing) {
-      // Resend OTP — update OTP and expiry
-      const { updateCitizenOTP } = await import('@/lib/db');await updateCitizenOTP(phone, '123456');
-      return NextResponse.json({ 
-        success: true, 
-        message: 'OTP sent to your phone',
-        otp: '123456',
-        citizen_id: existing.id
-      });
+      return NextResponse.json(
+        { success: false, error: 'Phone number already registered' },
+        { status: 400 }
+      );
     }
-    
-    // Create new citizen
-    const result = await createCitizen({ name, phone, email });
-    
-    return NextResponse.json({ 
-      success: true, 
-      message: 'OTP sent to your phone',
-      otp: result.otp,
-      citizen_id: result.id
+
+    // Generate OTP (mock: 123456 for now)
+    const otp = '123456';
+
+    // Create citizen record (unverified)
+    const citizenId = await db.createCitizen({
+      name,
+      phone: phoneClean,
+      ward: ward || null,
+      language: language || 'en',
+      verified: false
+    });
+
+    // Update with OTP
+    await db.updateCitizenOTP(citizenId, otp);
+
+    return NextResponse.json({
+      success: true,
+      message: 'OTP sent successfully. Use 123456 to verify.',
+      data: {
+        citizen_id: citizenId,
+        phone: phoneClean,
+        otp_hint: 'Use 123456'
+      }
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    console.error('POST /api/auth/register error:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }

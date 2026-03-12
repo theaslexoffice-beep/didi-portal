@@ -5,9 +5,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  --terracotta: #C75B39;
+  --terracotta: #D4532B;
+  --terracotta-50: #FEF2EE;
+  --terracotta-100: #FDE4DC;
+  --terracotta-200: #FBCAB9;
+  --terracotta-300: #F9AF96;
+  --terracotta-400: #F79573;
+  --terracotta-500: #D4532B;
+  --terracotta-600: #C75B39;
+  --terracotta-700: #A0492D;
   --teal: #0D9488;
-  --mustard: #D4A017;
+  --teal-50: #F0FDFA;
+  --teal-100: #CCFBF1;
+  --teal-200: #99F6E4;
+  --teal-300: #5EEAD4;
+  --teal-400: #2DD4BF;
+  --teal-500: #0D9488;
+  --teal-600: #0F766E;
+  --teal-700: #115E59;
+  --mustard: #D97706;
+  --mustard-600: #D97706;
   --slate: #1E293B;
   --bg-warm-start: #FAFAF8;
   --bg-warm-end: #F0F9FF;
@@ -83,7 +100,7 @@ html {
   }
   
   .shadow-glow {
-    box-shadow: 0 8px 32px rgba(199, 83, 57, 0.15);
+    box-shadow: 0 8px 32px rgba(212, 83, 43, 0.15);
   }
   
   .shadow-glow-teal {
@@ -183,50 +200,6 @@ html {
   animation: fade-in 0.3s ease-in;
 }
 
-/* Mobile Bottom Nav */
-@media (max-width: 768px) {
-  .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    border-top: 2px solid #f0f0f0;
-    padding: 0.5rem;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    z-index: 50;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
-  }
-  
-  .bottom-nav-spacer {
-    height: 70px;
-  }
-}
-
-/* Button Styles */
-.btn-primary {
-  @apply px-6 py-3 bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105;
-}
-
-.btn-secondary {
-  @apply px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105;
-}
-
-.btn-outline {
-  @apply px-6 py-3 border-2 border-terracotta-500 text-terracotta-600 font-bold rounded-2xl hover:bg-terracotta-50 transition-all duration-300;
-}
-
-/* Card Styles */
-.card {
-  @apply bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-xl transition-all duration-300;
-}
-
-.card-glass {
-  @apply glass rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300;
-}
-
 /* Input Styles */
 .input-field {
   @apply w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-terracotta-300 focus:border-terracotta-400 outline-none transition-all duration-200;
@@ -234,31 +207,6 @@ html {
 
 .input-field:focus {
   @apply border-terracotta-400;
-}
-
-/* Badge Styles */
-.badge {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
-}
-
-.badge-p0 {
-  @apply bg-red-500 text-white animate-pulse-glow;
-}
-
-.badge-p1 {
-  @apply bg-orange-500 text-white;
-}
-
-.badge-p2 {
-  @apply bg-yellow-500 text-white;
-}
-
-.badge-p3 {
-  @apply bg-blue-500 text-white;
-}
-
-.badge-p4 {
-  @apply bg-gray-400 text-white;
 }
 
 /* Loading Spinner */
@@ -269,7 +217,7 @@ html {
 }
 
 .spinner {
-  border: 3px solid rgba(199, 83, 57, 0.1);
+  border: 3px solid rgba(212, 83, 43, 0.1);
   border-radius: 50%;
   border-top-color: var(--terracotta);
   width: 40px;

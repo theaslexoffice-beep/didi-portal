@@ -5,17 +5,18 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const ward = searchParams.get('ward');
-    
+
+    // Get community strength data
     const strength = getCommunityStrength(ward);
-    
+
     return NextResponse.json({
       success: true,
-      ...strength
+      data: strength
     });
   } catch (error) {
-    console.error('Error fetching community strength:', error);
+    console.error('GET /api/community/strength error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch community strength' },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

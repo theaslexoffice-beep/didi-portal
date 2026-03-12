@@ -1,63 +1,63 @@
 import { NextResponse } from 'next/server';
-import { getIssueById, getCitizenById, createLegalDocument } from '@/lib/data';
-import { generateRTI } from '@/lib/legal/rti-drafter';
+import * as db from '@/lib/data';
+import { draftRTI } from '@/lib/legal/rti-drafter';
 
-// POST /api/legal/rti — Generate RTI application
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { issue_id, citizen_id, language = 'en' } = body;
-    
-    if (!issue_id || !citizen_id) {
+    const { department, subject, information_sought, citizen_id } = body;
+
+    // Validate required fields
+    if (!department || !subject || !information_sought || !citizen_id) {
       return NextResponse.json(
-        { error: 'issue_id and citizen_id are required' },
+        { success: false, error: 'department, subject, information_sought, and citizen_id are required' },
         { status: 400 }
       );
     }
+
+    // Get citizen info
+    const citizen = await db.getCitizenById(citizen_id);
     
-    const issue = await getIssueById(parseInt(issue_id));
-    if (!issue) {
-      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
-    }
-    
-    const citizen = await getCitizenById(parseInt(citizen_id));
     if (!citizen) {
-      return NextResponse.json({ error: 'Citizen not found' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: 'Citizen not found' },
+        { status: 404 }
+      );
     }
-    
-    // Generate RTI
-    const rtiDoc = generateRTI(issue, citizen, language);
-    
-    // Save to database
-    const docId = await createLegalDocument({
-      issue_id: issue.id,
-      citizen_id: citizen.id,
-      doc_type: 'rti',
-      title: `RTI Application - ${issue.title || issue.description.substring(0, 50)}`,
-      content: rtiDoc.text,
-      content_html: rtiDoc.html,
-      language,
+
+    // Draft RTI
+    const rtiData = {
+      department,
+      subject,
+      information_sought,
+      applicant_name: citizen.name,
+      applicant_address: citizen.address || 'Bilaspur, Chhattisgarh',
+      applicant_phone: citizen.phone
+    };
+
+    const rtiDocument = draftRTI(rtiData);
+
+    // Save to legal_documents
+    const docId = await db.createLegalDocument({
+      citizen_id,
+      document_type: 'rti',
+      title: `RTI Application - ${subject}`,
+      content: rtiDocument,
       status: 'draft'
     });
-    
+
     return NextResponse.json({
       success: true,
-      document_id: docId,
-      document: {
-        type: 'rti',
-        text: rtiDoc.text,
-        html: rtiDoc.html,
-        department: rtiDoc.department,
-        pio_address: rtiDoc.pioAddress,
-        language
-      },
-      disclaimer: 'AI-generated draft. Consult a qualified advocate before use.'
+      data: {
+        document_id: docId,
+        document: rtiDocument,
+        disclaimer: 'AI-generated document. Please consult an advocate before filing.'
+      }
     });
-    
   } catch (error) {
-    console.error('Error generating RTI:', error);
+    console.error('POST /api/legal/rti error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

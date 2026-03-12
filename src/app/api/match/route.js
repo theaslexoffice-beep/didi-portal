@@ -1,44 +1,33 @@
 import { NextResponse } from 'next/server';
-import { getIssueById } from '@/lib/data';
-import { findNearestHelpers, suggestSkillsForCategory } from '@/lib/matcher';
+import { findEligibleSchemes } from '@/lib/scheme-matcher';
 
 export async function POST(request) {
   try {
-    const { issue_id, radius_km, limit } = await request.json();
-    
-    if (!issue_id) {
-      return NextResponse.json({ success: false, error: 'Issue ID required' }, { status: 400 });
+    const body = await request.json();
+    const { citizen_profile } = body;
+
+    if (!citizen_profile) {
+      return NextResponse.json(
+        { success: false, error: 'citizen_profile is required' },
+        { status: 400 }
+      );
     }
-    
-    const issue = await getIssueById(parseInt(issue_id));
-    
-    if (!issue) {
-      return NextResponse.json({ success: false, error: 'Issue not found' }, { status: 404 });
-    }
-    
-    if (!issue.lat || !issue.lng) {
-      return NextResponse.json({ success: false, error: 'Issue has no location data' }, { status: 400 });
-    }
-    
-    // Suggest skills based on category
-    const suggestedSkills = suggestSkillsForCategory(issue.category);
-    
-    // Find nearest helpers
-    const helpers = findNearestHelpers(
-      issue.lat,
-      issue.lng,
-      suggestedSkills,
-      radius_km || 5,
-      limit || 10
-    );
-    
-    return NextResponse.json({ 
-      success: true, 
-      helpers,
-      suggested_skills: suggestedSkills
+
+    // Find eligible schemes
+    const matches = findEligibleSchemes(citizen_profile);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        total_matches: matches.length,
+        schemes: matches
+      }
     });
   } catch (error) {
-    console.error('Match error:', error);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    console.error('POST /api/match error:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }

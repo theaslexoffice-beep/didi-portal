@@ -1,63 +1,64 @@
 import { NextResponse } from 'next/server';
-import { getIssueById, getCitizenById, getEscalationLogs, createLegalDocument } from '@/lib/data';
-import { generateLegalNotice } from '@/lib/legal/legal-notice';
+import * as db from '@/lib/data';
+import { draftLegalNotice } from '@/lib/legal/legal-notice';
 
-// POST /api/legal/notice — Generate legal notice
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { issue_id, citizen_id } = body;
-    
-    if (!issue_id || !citizen_id) {
+    const { to, subject, facts, demand, citizen_id } = body;
+
+    // Validate required fields
+    if (!to || !subject || !facts || !demand || !citizen_id) {
       return NextResponse.json(
-        { error: 'issue_id and citizen_id are required' },
+        { success: false, error: 'to, subject, facts, demand, and citizen_id are required' },
         { status: 400 }
       );
     }
+
+    // Get citizen info
+    const citizen = await db.getCitizenById(citizen_id);
     
-    const issue = await getIssueById(parseInt(issue_id));
-    if (!issue) {
-      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
-    }
-    
-    const citizen = await getCitizenById(parseInt(citizen_id));
     if (!citizen) {
-      return NextResponse.json({ error: 'Citizen not found' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: 'Citizen not found' },
+        { status: 404 }
+      );
     }
-    
-    // Get escalation history
-    const escalationHistory = await getEscalationLogs(parseInt(issue_id));
-    
-    // Generate legal notice
-    const noticeDoc = generateLegalNotice(issue, citizen, escalationHistory);
-    
-    // Save to database
-    const docId = await createLegalDocument({
-      issue_id: issue.id,
-      citizen_id: citizen.id,
-      doc_type: 'legal_notice',
-      title: `Legal Notice - ${issue.title || issue.description.substring(0, 50)}`,
-      content: noticeDoc.text,
-      content_html: noticeDoc.html,
-      language: 'en',
+
+    // Draft legal notice
+    const noticeData = {
+      from_name: citizen.name,
+      from_address: citizen.address || 'Bilaspur, Chhattisgarh',
+      to_name: to,
+      subject,
+      facts,
+      demand,
+      reply_period_days: 15
+    };
+
+    const noticeDocument = draftLegalNotice(noticeData);
+
+    // Save to legal_documents
+    const docId = await db.createLegalDocument({
+      citizen_id,
+      document_type: 'legal_notice',
+      title: `Legal Notice - ${subject}`,
+      content: noticeDocument,
       status: 'draft'
     });
-    
+
     return NextResponse.json({
       success: true,
-      document_id: docId,
-      document: {
-        type: 'legal_notice',
-        text: noticeDoc.text,
-        html: noticeDoc.html
-      },
-      disclaimer: 'AI-generated draft. Consult a qualified advocate before use.'
+      data: {
+        document_id: docId,
+        document: noticeDocument,
+        disclaimer: 'AI-generated legal notice. Recommended to send via registered post or through an advocate.'
+      }
     });
-    
   } catch (error) {
-    console.error('Error generating legal notice:', error);
+    console.error('POST /api/legal/notice error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

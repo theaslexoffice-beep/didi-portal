@@ -1,42 +1,76 @@
 import { NextResponse } from 'next/server';
-import { checkPILEligibility } from '@/lib/legal/pil-checker';
+import * as db from '@/lib/data';
+import { checkPIL } from '@/lib/legal/pil-checker';
 
-// GET /api/legal/pil — Check PIL eligibility
-// Query params: category, ward, city (optional, defaults to Bilaspur)
-export async function GET(request) {
+export async function POST(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category');
-    const ward = searchParams.get('ward');
-    const city = searchParams.get('city') || 'Bilaspur';
-    
-    if (!category || !ward) {
+    const body = await request.json();
+    const { issue, affected_people, fundamental_rights, citizen_id } = body;
+
+    // Validate required fields
+    if (!issue || !affected_people || !fundamental_rights || !citizen_id) {
       return NextResponse.json(
-        { error: 'category and ward are required query parameters' },
+        { success: false, error: 'issue, affected_people, fundamental_rights, and citizen_id are required' },
         { status: 400 }
       );
     }
+
+    // Get citizen info
+    const citizen = await db.getCitizenById(citizen_id);
     
-    const pilCheck = await checkPILEligibility(category, ward, city);
-    
-    return NextResponse.json({
-      eligible: pilCheck.eligible,
-      threshold: 30,
-      issue_count: pilCheck.issueCount,
-      affected_citizens: pilCheck.affectedCitizens,
-      pattern: pilCheck.pattern,
-      suggested_title: pilCheck.suggestedTitle,
-      constitutional_articles: pilCheck.articles,
-      landmark_cases: pilCheck.landmarkCases,
-      recommendation: pilCheck.eligible
-        ? 'This pattern qualifies for a Public Interest Litigation. Consider aggregating these complaints and approaching a qualified advocate.'
-        : `Need ${30 - pilCheck.issueCount} more complaints from this ward in the last 90 days to qualify for PIL.`
-    });
-    
+    if (!citizen) {
+      return NextResponse.json(
+        { success: false, error: 'Citizen not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check PIL eligibility
+    const pilData = {
+      issue,
+      affected_people,
+      fundamental_rights,
+      petitioner_name: citizen.name,
+      petitioner_address: citizen.address || 'Bilaspur, Chhattisgarh'
+    };
+
+    const pilResult = checkPIL(pilData);
+
+    // If eligible, save the draft
+    if (pilResult.eligible) {
+      const docId = await db.createLegalDocument({
+        citizen_id,
+        document_type: 'pil',
+        title: `PIL - ${issue}`,
+        content: pilResult.draft || '',
+        status: 'draft'
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          eligible: true,
+          document_id: docId,
+          assessment: pilResult.assessment,
+          draft: pilResult.draft,
+          disclaimer: 'AI-generated PIL. MUST be reviewed and filed by an advocate with PIL experience. Public Interest Litigation is a serious matter requiring legal expertise.'
+        }
+      });
+    } else {
+      return NextResponse.json({
+        success: true,
+        data: {
+          eligible: false,
+          assessment: pilResult.assessment,
+          reason: pilResult.reason,
+          alternative: pilResult.alternative
+        }
+      });
+    }
   } catch (error) {
-    console.error('Error checking PIL eligibility:', error);
+    console.error('POST /api/legal/pil error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

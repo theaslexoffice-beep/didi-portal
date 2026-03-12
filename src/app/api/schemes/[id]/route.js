@@ -1,23 +1,19 @@
 import { NextResponse } from 'next/server';
-import { getSchemeById } from '@/lib/data';
+import * as db from '@/lib/data';
 
-/**
- * GET /api/schemes/[id]
- * Get single scheme with full details
- */
 export async function GET(request, { params }) {
   try {
     const { id } = params;
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Scheme ID required' },
+        { success: false, error: 'Scheme ID is required' },
         { status: 400 }
       );
     }
 
-    const scheme = await getSchemeById(parseInt(id));
-
+    const scheme = await db.getSchemeById(parseInt(id));
+    
     if (!scheme) {
       return NextResponse.json(
         { success: false, error: 'Scheme not found' },
@@ -25,29 +21,22 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Parse JSON fields
+    // Parse JSON fields if needed
     if (scheme.eligibility && typeof scheme.eligibility === 'string') {
-      try {
-        scheme.eligibility = JSON.parse(scheme.eligibility);
-      } catch (e) {
-        scheme.eligibility = null;
-      }
+      scheme.eligibility = JSON.parse(scheme.eligibility);
     }
-
     if (scheme.documents_needed && typeof scheme.documents_needed === 'string') {
-      try {
-        scheme.documents_needed = JSON.parse(scheme.documents_needed);
-      } catch (e) {
-        scheme.documents_needed = [];
-      }
+      scheme.documents_needed = JSON.parse(scheme.documents_needed);
     }
 
-    return NextResponse.json({ success: true, scheme });
-
+    return NextResponse.json({
+      success: true,
+      data: scheme
+    });
   } catch (error) {
-    console.error('Get scheme by ID error:', error);
+    console.error('GET /api/schemes/[id] error:', error);
     return NextResponse.json(
-      { success: false, error: 'Server error', message: error.message },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

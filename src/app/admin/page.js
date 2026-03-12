@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Card from '@/components/ui/Card';
+import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import Skeleton from '@/components/ui/Skeleton';
 
 export default function AdminPanel() {
   const [password, setPassword] = useState('');
@@ -17,10 +21,15 @@ export default function AdminPanel() {
       const res = await fetch(`/api/admin?filter=${filter}`, {
         headers: { Authorization: auth },
       });
-      if (res.status === 401) { setAuthed(false); return; }
+      if (res.status === 401) { 
+        setAuthed(false); 
+        return; 
+      }
       const data = await res.json();
       setComplaints(data.complaints || []);
-    } catch {}
+    } catch (error) {
+      console.error('Failed to fetch complaints:', error);
+    }
     setLoading(false);
   };
 
@@ -29,117 +38,195 @@ export default function AdminPanel() {
   }, [authed, filter]);
 
   const handleAction = async (id, status) => {
-    await fetch('/api/admin', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: auth },
-      body: JSON.stringify({ id, status }),
-    });
-    fetchComplaints();
+    try {
+      await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: auth },
+        body: JSON.stringify({ id, status }),
+      });
+      fetchComplaints();
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
   };
 
+  // Login Screen
   if (!authed) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-sm max-w-sm w-full text-center">
-          <h1 className="text-2xl font-bold text-terracotta-600 mb-2">🔐 DIDI Admin</h1>
+      <div className="min-h-screen bg-gradient-to-br from-terracotta-50 via-white to-teal-50 flex items-center justify-center p-4">
+        <Card variant="glass" className="max-w-sm w-full text-center">
+          <div className="text-5xl mb-4">🔐</div>
+          <h1 className="text-3xl font-black text-terracotta-600 mb-2">DIDI Admin</h1>
           <p className="text-sm text-gray-500 mb-6">Enter admin password to continue</p>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && setAuthed(true)}
-            placeholder="Password"
-            className="w-full px-4 py-2.5 border rounded-xl text-sm mb-4 focus:ring-2 focus:ring-terracotta-200 outline-none"
+            placeholder="Admin Password"
+            className="input-field mb-4"
           />
-          <button onClick={() => setAuthed(true)} className="w-full py-2.5 bg-terracotta-500 text-white rounded-xl font-medium hover:bg-terracotta-600">
-            Login
-          </button>
-        </div>
+          <Button 
+            onClick={() => setAuthed(true)} 
+            variant="primary"
+            className="w-full"
+          >
+            🚀 Login
+          </Button>
+        </Card>
       </div>
     );
   }
 
+  // Admin Dashboard
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-terracotta-50 via-white to-teal-50 p-4">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-terracotta-600">🛡️ DIDI Admin Panel</h1>
-            <p className="text-sm text-gray-500">Review and moderate citizen complaints</p>
+        {/* Header */}
+        <Card className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-black text-terracotta-600 mb-1 flex items-center gap-2">
+                <span>🛡️</span> DIDI Admin Panel
+              </h1>
+              <p className="text-sm text-gray-500">Review and moderate citizen complaints</p>
+            </div>
+            <Button 
+              onClick={() => { setAuthed(false); setPassword(''); }} 
+              variant="ghost"
+              size="sm"
+            >
+              Logout
+            </Button>
           </div>
-          <button onClick={() => { setAuthed(false); setPassword(''); }} className="text-sm text-gray-500 hover:text-red-500">
-            Logout
-          </button>
-        </div>
+        </Card>
 
         {/* Filters */}
         <div className="flex gap-2 mb-6">
-          {['pending', 'all'].map((f) => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-4 py-1.5 text-sm rounded-full ${filter === f ? 'bg-terracotta-500 text-white' : 'bg-white text-gray-600 border'}`}>
-              {f === 'pending' ? '⏳ Pending' : '📋 All'}
-            </button>
-          ))}
-          <button onClick={fetchComplaints} className="px-4 py-1.5 text-sm bg-white border rounded-full text-gray-600 hover:bg-gray-50">
+          <button 
+            onClick={() => setFilter('pending')} 
+            className={`px-4 py-2 text-sm rounded-full font-semibold transition ${
+              filter === 'pending' 
+                ? 'bg-terracotta-500 text-white shadow-md' 
+                : 'bg-white text-gray-600 border hover:bg-gray-50'
+            }`}
+          >
+            ⏳ Pending
+          </button>
+          <button 
+            onClick={() => setFilter('all')} 
+            className={`px-4 py-2 text-sm rounded-full font-semibold transition ${
+              filter === 'all' 
+                ? 'bg-terracotta-500 text-white shadow-md' 
+                : 'bg-white text-gray-600 border hover:bg-gray-50'
+            }`}
+          >
+            📋 All
+          </button>
+          <button 
+            onClick={fetchComplaints} 
+            className="px-4 py-2 text-sm bg-white border rounded-full text-gray-600 hover:bg-gray-50 font-semibold transition"
+          >
             🔄 Refresh
           </button>
         </div>
 
-        {/* Complaints */}
+        {/* Complaints List */}
         {loading ? (
-          <div className="text-center py-10 text-gray-400">Loading...</div>
-        ) : complaints.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border">
-            <div className="text-4xl mb-3">✅</div>
-            <p className="text-gray-500">No complaints to review!</p>
+          <div className="space-y-4">
+            <Skeleton variant="card" />
+            <Skeleton variant="card" />
+            <Skeleton variant="card" />
           </div>
+        ) : complaints.length === 0 ? (
+          <Card className="text-center py-16">
+            <div className="text-6xl mb-3">✅</div>
+            <p className="text-xl font-bold text-gray-700 mb-2">All caught up!</p>
+            <p className="text-gray-500">No complaints to review at the moment.</p>
+          </Card>
         ) : (
           <div className="space-y-4">
             {complaints.map((c) => (
-              <div key={c.id} className="bg-white p-5 rounded-2xl border shadow-sm">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
+              <Card key={c.id} className="hover:shadow-xl transition-shadow">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-3 flex-wrap gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-mono text-gray-400">#{c.id}</span>
-                    <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
-                      c.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                      c.status === 'approved' ? 'bg-green-100 text-green-700' :
-                      c.status === 'resolved' ? 'bg-blue-100 text-blue-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
+                    <Badge variant={
+                      c.status === 'pending' ? 'warning' :
+                      c.status === 'approved' ? 'success' :
+                      c.status === 'resolved' ? 'secondary' :
+                      'danger'
+                    }>
                       {c.status}
-                    </span>
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">{c.category}</span>
+                    </Badge>
+                    <Badge variant="default">{c.category}</Badge>
                   </div>
-                  <span className="text-xs text-gray-400">{new Date(c.created_at).toLocaleString()}</span>
+                  <span className="text-xs text-gray-400">
+                    {new Date(c.created_at).toLocaleString('en-IN', { 
+                      dateStyle: 'short', 
+                      timeStyle: 'short' 
+                    })}
+                  </span>
                 </div>
 
-                <p className="text-sm text-gray-700 mb-3 leading-relaxed">{c.description}</p>
+                {/* Description */}
+                <p className="text-sm text-gray-700 mb-4 leading-relaxed bg-gray-50 p-3 rounded-xl">
+                  {c.description}
+                </p>
 
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-gray-400 space-y-0.5">
-                    <p>👤 {c.name || 'Anonymous'}</p>
-                    <p>📱 {c.whatsapp}</p>
-                    {c.email && <p>📧 {c.email}</p>}
+                {/* Footer */}
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  {/* Citizen Info */}
+                  <div className="text-xs text-gray-500 space-y-1">
+                    <p className="flex items-center gap-1">
+                      <span>👤</span>
+                      <strong>{c.name || 'Anonymous'}</strong>
+                    </p>
+                    <p className="flex items-center gap-1">
+                      <span>📱</span>
+                      {c.whatsapp}
+                    </p>
+                    {c.email && (
+                      <p className="flex items-center gap-1">
+                        <span>📧</span>
+                        {c.email}
+                      </p>
+                    )}
                   </div>
 
-                  <div className="flex gap-2">
+                  {/* Actions */}
+                  <div className="flex gap-2 flex-wrap">
                     {c.status === 'pending' && (
                       <>
-                        <button onClick={() => handleAction(c.id, 'approved')} className="px-3 py-1.5 text-xs bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium">
+                        <Button 
+                          onClick={() => handleAction(c.id, 'approved')} 
+                          size="sm"
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                        >
                           ✅ Approve
-                        </button>
-                        <button onClick={() => handleAction(c.id, 'rejected')} className="px-3 py-1.5 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium">
+                        </Button>
+                        <Button 
+                          onClick={() => handleAction(c.id, 'rejected')} 
+                          size="sm"
+                          className="bg-red-500 hover:bg-red-600 text-white"
+                        >
                           ❌ Reject
-                        </button>
+                        </Button>
                       </>
                     )}
                     {c.status === 'approved' && (
-                      <button onClick={() => handleAction(c.id, 'resolved')} className="px-3 py-1.5 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium">
+                      <Button 
+                        onClick={() => handleAction(c.id, 'resolved')} 
+                        variant="secondary"
+                        size="sm"
+                      >
                         ✅ Mark Resolved
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
