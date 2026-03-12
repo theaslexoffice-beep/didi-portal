@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSchemeById } from '@/lib/db';
+import { getSchemeById } from '@/lib/data';
 
 /**
  * GET /api/schemes/[id]
@@ -16,7 +16,7 @@ export async function GET(request, { params }) {
       );
     }
 
-    const scheme = getSchemeById(parseInt(id));
+    const scheme = await getSchemeById(parseInt(id));
 
     if (!scheme) {
       return NextResponse.json(

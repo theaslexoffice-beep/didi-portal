@@ -1,7 +1,7 @@
 // PIL (Public Interest Litigation) Aggregator
 // Checks if issues qualify for PIL based on pattern and threshold
 
-import { getIssues } from '../db.js';
+import { getIssues } from '../data.js';
 
 const PIL_THRESHOLD = 50; // Minimum 50 similar complaints
 const PIL_TIMEFRAME_DAYS = 90; // Within 90 days
@@ -67,11 +67,11 @@ const RELEVANT_ARTICLES = {
  * @param {string} category - Issue category
  * @param {string} ward - Ward/area
  * @param {string} city - City (default: Bilaspur)
- * @returns {Object} PIL eligibility data
+ * @returns {Promise<Object>} PIL eligibility data
  */
-export function checkPILEligibility(category, ward, city = 'Bilaspur') {
+export async function checkPILEligibility(category, ward, city = 'Bilaspur') {
   // Get issues from database
-  const allIssues = getIssues({ category, ward, status: 'open', limit: 500 });
+  const allIssues = await getIssues({ category, ward, status: 'open', limit: 500 });
   
   // Filter issues within the timeframe
   const cutoffDate = new Date();

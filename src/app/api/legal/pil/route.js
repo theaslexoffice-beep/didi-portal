@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
 import { checkPILEligibility } from '@/lib/legal/pil-checker';
 
 // GET /api/legal/pil — Check PIL eligibility
@@ -18,8 +17,7 @@ export async function GET(request) {
       );
     }
     
-    const db = getDb();
-    const pilCheck = checkPILEligibility(db, category, ward, city);
+    const pilCheck = await checkPILEligibility(category, ward, city);
     
     return NextResponse.json({
       eligible: pilCheck.eligible,

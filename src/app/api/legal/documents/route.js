@@ -5,7 +5,7 @@ import {
   getLegalDocumentsByCitizen,
   getLegalDocumentById,
   updateLegalDocumentStatus
-} from '@/lib/db';
+} from '@/lib/data';
 
 // GET /api/legal/documents — List legal documents
 // Query params: issue_id OR citizen_id OR document_id
@@ -21,7 +21,7 @@ export async function GET(request) {
     let documents;
     
     if (documentId) {
-      const doc = getLegalDocumentById(parseInt(documentId));
+      const doc = await getLegalDocumentById(parseInt(documentId));
       if (!doc) {
         return NextResponse.json({ error: 'Document not found' }, { status: 404 });
       }
@@ -81,7 +81,7 @@ export async function PATCH(request) {
       );
     }
     
-    const result = updateLegalDocumentStatus(parseInt(document_id), status);
+    const result = await updateLegalDocumentStatus(parseInt(document_id), status);
     
     if (!result || result.changes === 0) {
       return NextResponse.json({ error: 'Document not found or not updated' }, { status: 404 });

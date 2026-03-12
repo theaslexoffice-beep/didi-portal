@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllSchemes, getSchemeById } from '@/lib/db';
+import { getAllSchemes, getSchemeById } from '@/lib/data';
 import { getDocumentChecklist, generatePrintableChecklist, getApplicationSequence } from '@/lib/scheme-documents';
 
 /**

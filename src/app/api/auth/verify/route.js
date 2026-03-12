@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { verifyCitizen } from '@/lib/db';
+import { verifyCitizen } from '@/lib/data';
 
 export async function POST(request) {
   try {
@@ -9,7 +9,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Phone and OTP are required' }, { status: 400 });
     }
     
-    const result = verifyCitizen(phone, otp);
+    const result = await verifyCitizen(phone, otp);
     
     if (result.success) {
       return NextResponse.json({ 

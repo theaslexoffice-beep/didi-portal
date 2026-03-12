@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createIssue, getIssues, getIssueStats } from '@/lib/db';
+import { createIssue, getIssues, getIssueStats } from '@/lib/data';
 import { classifySeverity } from '@/lib/severity';
 
 export async function GET(request) {
@@ -12,8 +12,8 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
     
-    const issues = getIssues({ category, severity, status, ward, limit, offset });
-    const stats = getIssueStats();
+    const issues = await getIssues({ category, severity, status, ward, limit, offset });
+    const stats = await getIssueStats();
     
     // Parse JSON fields
     issues.forEach(issue => {
@@ -40,7 +40,7 @@ export async function POST(request) {
     // Auto-classify severity using AI
     const severity = data.severity || classifySeverity(data.description);
     
-    const issueId = createIssue({
+    const issueId = await createIssue({
       ...data,
       severity
     });

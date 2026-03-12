@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllSchemes } from '@/lib/db';
+import { getAllSchemes } from '@/lib/data';
 import { 
   findEligibleSchemes, 
   getSchemesByCategory, 

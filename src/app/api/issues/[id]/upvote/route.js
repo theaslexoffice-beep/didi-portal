@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
-import { incrementIssueUpvotes, getIssueById } from '@/lib/db';
+import { incrementIssueUpvotes, getIssueById } from '@/lib/data';
 
 export async function POST(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = params;await incrementIssueUpvotes(parseInt(id));
     
-    incrementIssueUpvotes(parseInt(id));
-    
-    const issue = getIssueById(parseInt(id));
+    const issue = await getIssueById(parseInt(id));
     
     return NextResponse.json({ 
       success: true, 

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { createComplaint, getApprovedComplaints } from '@/lib/db';
+import { createComplaint, getApprovedComplaints } from '@/lib/data';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
-    const complaints = getApprovedComplaints(limit, offset);
+    const complaints = await getApprovedComplaints(limit, offset);
     return NextResponse.json({ success: true, complaints });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -35,7 +35,7 @@ export async function POST(request) {
       );
     }
 
-    const id = createComplaint({
+    const id = await createComplaint({
       name: name || 'Anonymous',
       whatsapp: phoneClean,
       email: email || null,

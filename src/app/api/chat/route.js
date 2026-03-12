@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { saveChatMessage, getChatHistory } from '@/lib/db';
+import { saveChatMessage, getChatHistory } from '@/lib/data';
 
 // DIDI's personality-driven responses
 const DIDI_SYSTEM = {
@@ -68,13 +68,13 @@ export async function POST(request) {
     }
 
     // Save user message
-    saveChatMessage(sessionId, 'user', message, lang || 'en');
+await saveChatMessage(sessionId, 'user', message, lang || 'en');
 
     // Generate DIDI response
     const response = generateDidiResponse(message, lang || 'en');
 
     // Save bot response
-    saveChatMessage(sessionId, 'didi', response, lang || 'en');
+await saveChatMessage(sessionId, 'didi', response, lang || 'en');
 
     return NextResponse.json({ success: true, response });
   } catch (error) {

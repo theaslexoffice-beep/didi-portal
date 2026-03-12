@@ -7,7 +7,7 @@ export async function GET(request) {
     const ward = searchParams.get('ward');
     const period = searchParams.get('period') || 'month'; // month, week, all-time
     
-    const leaderboard = getLeaderboard(ward, period);
+    const leaderboard = await getLeaderboard(ward, period);
     
     return NextResponse.json({
       success: true,

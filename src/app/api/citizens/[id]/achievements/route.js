@@ -5,7 +5,7 @@ export async function GET(request, { params }) {
   try {
     const { id } = params;
     
-    const achievements = getAchievements(parseInt(id));
+    const achievements = await getAchievements(parseInt(id));
     
     return NextResponse.json({
       success: true,

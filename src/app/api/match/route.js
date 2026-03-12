@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getIssueById } from '@/lib/db';
+import { getIssueById } from '@/lib/data';
 import { findNearestHelpers, suggestSkillsForCategory } from '@/lib/matcher';
 
 export async function POST(request) {
@@ -10,7 +10,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Issue ID required' }, { status: 400 });
     }
     
-    const issue = getIssueById(parseInt(issue_id));
+    const issue = await getIssueById(parseInt(issue_id));
     
     if (!issue) {
       return NextResponse.json({ success: false, error: 'Issue not found' }, { status: 404 });

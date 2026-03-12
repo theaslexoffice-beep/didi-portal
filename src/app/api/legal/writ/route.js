@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getIssueById, getCitizenById, getEscalationLogs, createLegalDocument } from '@/lib/db';
+import { getIssueById, getCitizenById, getEscalationLogs, createLegalDocument } from '@/lib/data';
 import { generateWritPetition } from '@/lib/legal/writ-drafter';
 
 // POST /api/legal/writ — Generate writ petition
@@ -15,24 +15,24 @@ export async function POST(request) {
       );
     }
     
-    const issue = getIssueById(parseInt(issue_id));
+    const issue = await getIssueById(parseInt(issue_id));
     if (!issue) {
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
     
-    const citizen = getCitizenById(parseInt(citizen_id));
+    const citizen = await getCitizenById(parseInt(citizen_id));
     if (!citizen) {
       return NextResponse.json({ error: 'Citizen not found' }, { status: 404 });
     }
     
     // Get escalation history
-    const escalationHistory = getEscalationLogs(parseInt(issue_id));
+    const escalationHistory = await getEscalationLogs(parseInt(issue_id));
     
     // Generate writ petition
     const writDoc = generateWritPetition(issue, citizen, escalationHistory);
     
     // Save to database
-    const docId = createLegalDocument({
+    const docId = await createLegalDocument({
       issue_id: issue.id,
       citizen_id: citizen.id,
       doc_type: 'writ_petition',

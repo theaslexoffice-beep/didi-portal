@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { resourceMatch } from '@/lib/matcher';
-import { getIssueById } from '@/lib/db';
+import { getIssueById } from '@/lib/data';
 
 export async function POST(request) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request) {
       );
     }
     
-    const issue = getIssueById(issue_id);
+    const issue = await getIssueById(issue_id);
     if (!issue) {
       return NextResponse.json(
         { error: 'Issue not found' },

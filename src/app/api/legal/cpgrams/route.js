@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getIssueById, getCitizenById, createLegalDocument } from '@/lib/db';
+import { getIssueById, getCitizenById, createLegalDocument } from '@/lib/data';
 import { prepareCPGRAMS } from '@/lib/legal/cpgrams-helper';
 
 // POST /api/legal/cpgrams — Prepare CPGRAMS complaint
@@ -15,12 +15,12 @@ export async function POST(request) {
       );
     }
     
-    const issue = getIssueById(parseInt(issue_id));
+    const issue = await getIssueById(parseInt(issue_id));
     if (!issue) {
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
     
-    const citizen = getCitizenById(parseInt(citizen_id));
+    const citizen = await getCitizenById(parseInt(citizen_id));
     if (!citizen) {
       return NextResponse.json({ error: 'Citizen not found' }, { status: 404 });
     }
@@ -29,7 +29,7 @@ export async function POST(request) {
     const cpgramsDoc = prepareCPGRAMS(issue, citizen);
     
     // Save to database
-    const docId = createLegalDocument({
+    const docId = await createLegalDocument({
       issue_id: issue.id,
       citizen_id: citizen.id,
       doc_type: 'cpgrams',

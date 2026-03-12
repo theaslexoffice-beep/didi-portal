@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllComplaints, getPendingComplaints, updateComplaintStatus } from '@/lib/db';
+import { getAllComplaints, getPendingComplaints, updateComplaintStatus } from '@/lib/data';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'didi-admin-2026';
 
@@ -49,8 +49,7 @@ export async function PATCH(request) {
     if (!['approved', 'rejected', 'resolved', 'pending'].includes(status)) {
       return NextResponse.json({ success: false, error: 'Invalid status' }, { status: 400 });
     }
-
-    updateComplaintStatus(id, status, adminNotes);
+await updateComplaintStatus(id, status, adminNotes);
     return NextResponse.json({ success: true, message: `Complaint ${id} updated to ${status}` });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

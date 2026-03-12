@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { updateTrustScore, getTrustBadge } from '@/lib/community';
-import { getCitizenById } from '@/lib/db';
+import { getCitizenById } from '@/lib/data';
 
 export async function GET(request, { params }) {
   try {
     const { id } = params;
     
-    const citizen = getCitizenById(parseInt(id));
+    const citizen = await getCitizenById(parseInt(id));
     if (!citizen) {
       return NextResponse.json(
         { error: 'Citizen not found' },
@@ -15,7 +15,7 @@ export async function GET(request, { params }) {
     }
     
     // Recalculate trust score
-    const trustScore = updateTrustScore(parseInt(id));
+    const trustScore = await updateTrustScore(parseInt(id));
     const badge = getTrustBadge(trustScore);
     
     return NextResponse.json({

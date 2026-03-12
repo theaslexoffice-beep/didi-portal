@@ -7,7 +7,7 @@ import {
   createEscalationLog,
   updateIssueEscalationLevel,
   createLegalDocument
-} from '@/lib/db';
+} from '@/lib/data';
 import {
   getEscalationStatus,
   getNextEscalation,
@@ -23,14 +23,14 @@ import { generateWritPetition } from '@/lib/legal/writ-drafter';
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
-    const issue = getIssueById(parseInt(id));
+    const issue = await getIssueById(parseInt(id));
     
     if (!issue) {
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
     
-    const logs = getEscalationLogs(parseInt(id));
-    const latest = getLatestEscalation(parseInt(id));
+    const logs = await getEscalationLogs(parseInt(id));
+    const latest = await getLatestEscalation(parseInt(id));
     const status = getEscalationStatus(issue, logs);
     const timeline = generateEscalationTimeline(issue, logs);
     const nextEscalation = getNextEscalation(issue, logs);
@@ -68,14 +68,14 @@ export async function POST(request, { params }) {
     const body = await request.json();
     const { force = false, language = 'en' } = body;
     
-    const issue = getIssueById(parseInt(id));
+    const issue = await getIssueById(parseInt(id));
     if (!issue) {
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
     
     const citizen = issue.citizen_id ? getCitizenById(issue.citizen_id) : null;
-    const logs = getEscalationLogs(parseInt(id));
-    const latest = getLatestEscalation(parseInt(id));
+    const logs = await getEscalationLogs(parseInt(id));
+    const latest = await getLatestEscalation(parseInt(id));
     const currentLevel = latest?.level ?? -1;
     
     // Check if we should escalate
@@ -105,7 +105,7 @@ export async function POST(request, { params }) {
         if (citizen) {
           generatedDoc = prepareCPGRAMS(issue, citizen);
           documentType = 'cpgrams';
-          const docId = createLegalDocument({
+          const docId = await createLegalDocument({
             issue_id: issue.id,
             citizen_id: issue.citizen_id,
             doc_type: 'cpgrams',
@@ -122,7 +122,7 @@ export async function POST(request, { params }) {
         if (citizen) {
           generatedDoc = generateRTI(issue, citizen, language);
           documentType = 'rti';
-          const docId = createLegalDocument({
+          const docId = await createLegalDocument({
             issue_id: issue.id,
             citizen_id: issue.citizen_id,
             doc_type: 'rti',
@@ -140,7 +140,7 @@ export async function POST(request, { params }) {
         if (citizen) {
           generatedDoc = generateLegalNotice(issue, citizen, logs);
           documentType = 'legal_notice';
-          const docId = createLegalDocument({
+          const docId = await createLegalDocument({
             issue_id: issue.id,
             citizen_id: issue.citizen_id,
             doc_type: 'legal_notice',
@@ -158,7 +158,7 @@ export async function POST(request, { params }) {
         if (citizen) {
           generatedDoc = generateWritPetition(issue, citizen, logs);
           documentType = 'writ_petition';
-          const docId = createLegalDocument({
+          const docId = await createLegalDocument({
             issue_id: issue.id,
             citizen_id: issue.citizen_id,
             doc_type: 'writ_petition',
@@ -174,7 +174,7 @@ export async function POST(request, { params }) {
     }
     
     // Create escalation log entry
-    const logId = createEscalationLog({
+    const logId = await createEscalationLog({
       issue_id: issue.id,
       level: nextLevel,
       level_name: nextLevelName,
@@ -184,7 +184,7 @@ export async function POST(request, { params }) {
     });
     
     // Update issue escalation level
-    updateIssueEscalationLevel(issue.id, nextLevel);
+await updateIssueEscalationLevel(issue.id, nextLevel);
     
     return NextResponse.json({
       success: true,
