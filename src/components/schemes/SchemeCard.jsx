@@ -4,16 +4,33 @@ import Card from '../ui/Card';
 export default function SchemeCard({ scheme, lang = 'en', onClick }) {
   const getCategoryIcon = (category) => {
     const icons = {
-      'Education': '📚',
-      'Health': '🏥',
-      'Agriculture': '🌾',
-      'Women': '👩',
-      'Senior Citizens': '👴',
-      'Housing': '🏠',
-      'Employment': '💼',
-      'Financial': '💰'
+      'education': '📚',
+      'health': '🏥',
+      'agriculture': '🌾',
+      'women': '👩',
+      'senior': '👴',
+      'housing': '🏠',
+      'employment': '💼',
+      'livelihood': '💰',
+      'sc_st_obc': '🤝',
     };
-    return icons[category] || '📋';
+    return icons[(category || '').toLowerCase()] || '📋';
+  };
+
+  const getCategoryLabel = (category) => {
+    const labels = {
+      'agriculture': { en: 'Agriculture', hi: 'कृषि' },
+      'education': { en: 'Education', hi: 'शिक्षा' },
+      'health': { en: 'Health', hi: 'स्वास्थ्य' },
+      'women': { en: 'Women', hi: 'महिलाएं' },
+      'employment': { en: 'Employment', hi: 'रोजगार' },
+      'housing': { en: 'Housing', hi: 'आवास' },
+      'senior': { en: 'Senior Citizens', hi: 'वरिष्ठ नागरिक' },
+      'sc_st_obc': { en: 'SC/ST/OBC', hi: 'अनु.जाति/जनजाति' },
+      'livelihood': { en: 'Livelihood', hi: 'आजीविका' },
+    };
+    const l = labels[(category || '').toLowerCase()];
+    return l ? (l[lang] || l.en) : category;
   };
 
   return (
@@ -24,7 +41,9 @@ export default function SchemeCard({ scheme, lang = 'en', onClick }) {
       </div>
 
       {/* Scheme Name */}
-      <h3 className="font-black text-gray-900 mb-2 line-clamp-2">{scheme.name}</h3>
+      <h3 className="font-black text-gray-900 mb-2 line-clamp-2">
+        {lang === 'hi' && scheme.name_hi ? scheme.name_hi : scheme.name}
+      </h3>
 
       {/* Benefit */}
       {scheme.benefit && (
@@ -32,10 +51,12 @@ export default function SchemeCard({ scheme, lang = 'en', onClick }) {
       )}
 
       {/* Category */}
-      <p className="text-sm text-gray-600 mb-4">{scheme.category}</p>
+      <p className="text-sm text-gray-600 mb-4">{getCategoryLabel(scheme.category)}</p>
 
       {/* Description */}
-      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{scheme.description}</p>
+      <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+        {lang === 'hi' && scheme.description_hi ? scheme.description_hi : scheme.description}
+      </p>
 
       {/* Learn More */}
       <div className="flex items-center justify-center gap-1 text-sm font-semibold text-[#E63946] group-hover:gap-2 transition-all">

@@ -12,7 +12,18 @@ export default function SchemesList({ lang = 'en', onSchemeClick }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const categories = ['All', 'Education', 'Health', 'Agriculture', 'Women', 'Senior Citizens', 'Housing', 'Employment', 'Financial'];
+  const categories = [
+    { id: 'all', label: { en: 'All', hi: 'सभी' } },
+    { id: 'agriculture', label: { en: 'Agriculture', hi: 'कृषि' } },
+    { id: 'education', label: { en: 'Education', hi: 'शिक्षा' } },
+    { id: 'health', label: { en: 'Health', hi: 'स्वास्थ्य' } },
+    { id: 'women', label: { en: 'Women', hi: 'महिलाएं' } },
+    { id: 'employment', label: { en: 'Employment', hi: 'रोजगार' } },
+    { id: 'housing', label: { en: 'Housing', hi: 'आवास' } },
+    { id: 'senior', label: { en: 'Senior Citizens', hi: 'वरिष्ठ नागरिक' } },
+    { id: 'sc_st_obc', label: { en: 'SC/ST/OBC', hi: 'अनु.जाति/जनजाति/पिछड़ा' } },
+    { id: 'livelihood', label: { en: 'Livelihood', hi: 'आजीविका' } },
+  ];
 
   useEffect(() => {
     fetchSchemes();
@@ -26,7 +37,7 @@ export default function SchemesList({ lang = 'en', onSchemeClick }) {
     try {
       const res = await fetch('/api/schemes');
       const data = await res.json();
-      setSchemes(data.schemes || []);
+      setSchemes(data.data || data.schemes || []);
     } catch (error) {
       console.error('Failed to fetch schemes:', error);
     } finally {
@@ -97,15 +108,15 @@ export default function SchemesList({ lang = 'en', onSchemeClick }) {
         <div className="flex flex-wrap justify-center gap-2 mb-8">
           {categories.map((cat) => (
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat.toLowerCase())}
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
               className={`px-4 py-2 rounded-full font-medium transition-all ${
-                selectedCategory === cat.toLowerCase()
+                selectedCategory === cat.id
                   ? 'bg-[#E63946] text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              {cat}
+              {cat.label[lang] || cat.label.en}
             </button>
           ))}
         </div>
